@@ -38,8 +38,15 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "创建新的文章")
 }
 
+func forceHTMLMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+		next.ServeHTTP(rw, r)
+	})
+}
+
 func main() {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(true)
 
 	router.HandleFunc("/home", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
@@ -49,6 +56,8 @@ func main() {
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+
+	router.Use(forceHTMLMiddleware)
 
 	homeURL, _ := router.Get("home").URL()
 	fmt.Println("homeURL: ", homeURL)
